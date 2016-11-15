@@ -36,7 +36,8 @@ public class Authentifizierer {
 			String password = this.enterPassword();
 			User user = this.searchUser(id);
 			if(user == null){
-				anmeldungGescheitert = false;
+				anmeldungGescheitert = true;
+				anzahlFehlversuche++;
 				System.out.println("Anmeldung gescheitert! User existiert nicht. " + anzahlFehlversuche + ". Versuch");
 			} else if(user.getPassword().equals(password)){
 				anmeldungGescheitert = false;
