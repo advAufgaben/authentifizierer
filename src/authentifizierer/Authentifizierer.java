@@ -30,8 +30,10 @@ public class Authentifizierer {
 	
 	public void authentifizieren(){
 		boolean anmeldungGescheitert = true;
+		boolean isDBConnected = isConnected();
 		int anzahlFehlversuche = 0;
-		while(anmeldungGescheitert && anzahlFehlversuche < 3){
+		
+		while(isDBConnected && anmeldungGescheitert && anzahlFehlversuche < 3){
 			String id = this.enterUserid();
 			String password = this.enterPassword();
 			User user = this.searchUser(id);
@@ -45,10 +47,12 @@ public class Authentifizierer {
 			} else{
 				anmeldungGescheitert = true;
 				anzahlFehlversuche++;
-				System.out.println("Anmeldung gescheitert! " + anzahlFehlversuche + ". Versuch");
+				System.out.println("Anmeldung gescheitert! Falsches Passwort. " + anzahlFehlversuche + ". Versuch");
+			}
+			if(anzahlFehlversuche >= 3){
+				System.out.println("3. Fehlversuch. System beendet sich.");
 			}
 		}
-		System.out.println("3. Fehlversuch. System beendet sich.");
 	}
 	
 	/**
@@ -61,7 +65,7 @@ public class Authentifizierer {
 	}
 	
 	/**
-	 * fordert Benutzer zur Eingabe des Passworts
+	 * fordert Benutzer zur Eingabe des Passworts auf
 	 * @return Eingabe des Users
 	 */
 	public String enterPassword(){
@@ -75,20 +79,23 @@ public class Authentifizierer {
 	 * @return gefundener User bzw. {@code null} wenn nicht gefunden
 	 */
 	public User searchUser(String id){
+		User user = null;
 		try {
-			Statement statement = connection.createStatement();
 			String sqlSearchUser = "SELECT id, password "
 					+ "FROM " + TABLENAME + " "
 					+ "WHERE id=" + id + "";
+			Statement statement = connection.createStatement();
 			ResultSet result = statement.executeQuery(sqlSearchUser);
-			return createUser(result);
+			user = createUserObject(result);
+			result.close();
+			statement.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-		return null;
+		return user;
 	}
 	
-	private static User createUser(ResultSet result) throws SQLException{
+	private static User createUserObject(ResultSet result) throws SQLException{
 		if(result.next()){
 			String id = result.getString(1);
 			String password = result.getString(2);
@@ -96,5 +103,14 @@ public class Authentifizierer {
 			return user;
 		}
 		return null;
+	}
+	
+	private static boolean isConnected(){
+		try {
+			return connection.isValid(100);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 }
